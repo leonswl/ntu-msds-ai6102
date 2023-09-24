@@ -1,0 +1,97 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ }
+\title{ Machine Learning Methodologies and Applications (AI6012) Individual Assignment}
+\author{Leon Sun (G2204908A)}
+\date{30 September 2023}
+
+\begin{document}
+\maketitle
+ 
+
+\section{Question 1 (10 marks)}
+
+Suppose there are C classes, {0, 1, ..., C -1}
+\begin{equation}
+    For\;c>0: \quad P(y=c \mid x)=\frac{\exp \left(-w^{(c)^T} x\right)}{1+\sum_{c=1}^{C-1} \exp \left(-w^{(c)^T} x\right)}=\hat{y}_c
+    \end{equation}
+
+\begin{equation}
+    For\;c>0: \quad P(y=0 \mid x)=\frac{1}{1+\sum_{c=1}^{C-1} \exp \left(-w^{(c)^T} x\right)}=\hat{y}_0
+    \end{equation}
+
+\section{Question 2 (5 marks)}
+
+
+2.2. Answer:
+
+% Q2.2 LinearSVM table
+\begin{table}[!hbt]
+    \centering
+    % \resizebox{\columnwidth}{!}{%
+    \resizebox{0.5\columnwidth}{!}{%
+        \begin{tabular}{lllll}
+            \hline
+            \multicolumn{1}{|c|}{\textbf{C=0.01}} & \multicolumn{1}{c|}{\textbf{C=0.05}} & \multicolumn{1}{c|}{\textbf{C=0.1}} & \multicolumn{1}{c|}{\textbf{C=0.5}} & \multicolumn{1}{c|}{\textbf{C=1}} \\ \hline
+            \multicolumn{1}{|c|}{0.84958} & \multicolumn{1}{c|}{0.85038} & \multicolumn{1}{c|}{{\color[HTML]{FE0000} 0.85038}} & \multicolumn{1}{c|}{0.85050} & \multicolumn{1}{c|}{0.85032} \\ \hline
+        \end{tabular}%
+    }    
+    \caption{Classification accuracy on running linear kernel SVM on 3-fold cross-validation using training set with different values of the parameter C in \{0.01, 0.05, 0.1, 0.5, 1\}}
+    \label{tab:linearSVM}
+\end{table}
+
+2.3. Answer:
+\begin{table}[!hbt]
+    \centering
+    \resizebox{0.8\columnwidth}{!}{%
+        \begin{tabular}{|l|c|c|c|c|c|}
+        \hline
+        \multicolumn{1}{|c|}{} & \textbf{g=0.01} & \textbf{g=0.05} & \textbf{g=0.1} & \textbf{g=0.5} & \textbf{g=1} \\ \hline
+        C=0.01 & 0.76377 & 0.76433 & 0.77096 & 0.76377 & 0.76377 \\ \hline
+        \textbf{C=0.05} & 0.78871 & 0.83293 & 0.83029 & 0.76961 & 0.76377 \\ \hline
+        \textbf{C=0.1} & 0.83226 & 0.83754 & 0.83717 & 0.79092 & 0.76377 \\ \hline
+        \textbf{C=0.5} & 0.84411 & 0.84546 & 0.84559 & 0.82507 & 0.77772 \\ \hline
+        \textbf{C=1} & {\color[HTML]{FE0000} 0.84682} & 0.84589 & 0.84651 & 0.82956 & 0.78668 \\ \hline
+        \end{tabular}%
+    }
+    \caption{Classification accuracy on running rbf kernel SVM on 3-fold cross-validation using training set with parameter gamma in \{0.01, 0.05, 0.1, 0.5, 1\} and different values of the parameter C in \{0.01, 0.05, 0.1, 0.5, 1\}}
+    \label{tab:rbfSVM}
+\end{table}
+
+2.4. Answer:
+
+\begin{table}[!hbt]
+    \centering
+    \begin{tabular}{ll}
+        \hline
+        \multicolumn{1}{|c|}{\textbf{}} & \multicolumn{1}{c|}{\textbf{kernal=Linear, C=1}} \\ \hline
+        \multicolumn{1}{|c|}{\textbf{Accuracy of SVMs}} & \multicolumn{1}{c|}{0.84733} \\ \hline
+    \end{tabular}
+    \caption{Classification accuracy on running linear kernel SVM on 3-fold cross-validation using test set with different values with C=1}
+    \label{tab:OptimalSVM}
+\end{table}
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{ll}
+    \multicolumn{1}{c}{\textbf{}} & \multicolumn{1}{c}{\textbf{kernal=Linear, C=1}} \\
+    \multicolumn{1}{c}{\textbf{Accuracy of SVMs}} & \multicolumn{1}{c}{0.84733} \\
+     &  \\
+     & 
+    \end{tabular}
+    \caption{Classification accuracy on running linear kernel SVM on 3-fold cross-validation using test set with different values with C=1}
+    \label{tab:OptimalSVM}
+    \end{table}
+
+\section{Question 3 (5 marks)}
+
+\section{Question 4 (5 marks)}
+
+\end{document}
