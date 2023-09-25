@@ -1,6 +1,11 @@
 \documentclass{article}
 \usepackage{graphicx}
 \usepackage[table,xcdraw]{xcolor}
+\usepackage{amsmath}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+\usepackage{indentfirst}
+\usepackage{float}
+\usepackage{flafter}
 \usepackage{geometry}
  \geometry{
  a4paper,
@@ -18,20 +23,123 @@
 
 \section{Question 1 (10 marks)}
 
-Suppose there are C classes, {0, 1, ..., C -1}
+Multi-class classification, or Multinomial Logistic Regression, can be approached using softmax regression. The softmax function is generally defined as:
+
+\begin{equation}
+    \quad P(y=c \mid x)=\frac{\exp \left(w^{(c)} x\right)}{\sum_{i=1}^{C} \exp \left(w^{(i)} x\right)}\;\;or\;\;\frac{1}{1+\sum_{i\neq C}^{C} \exp \left(w^{i}\right).x}
+\end{equation}
+\linebreak
+
+Since the sum of all the conditional probabilities for the softmax is 1, we can summarise the probabilities for all classes to:
+
+\begin{equation}
+    \sum_{c=0}^{C} \quad P(y=c \mid x)=1
+\end{equation}
+
+By introducing the set of logits into we can arrived at the following parametric equations for multinomial logistic regression. Suppose there are C classes, {0, 1, ..., C-1}:
+
 \begin{equation}
     For\;c>0: \quad P(y=c \mid x)=\frac{\exp \left(-w^{(c)^T} x\right)}{1+\sum_{c=1}^{C-1} \exp \left(-w^{(c)^T} x\right)}=\hat{y}_c
-    \end{equation}
+\end{equation}
 
 \begin{equation}
     For\;c>0: \quad P(y=0 \mid x)=\frac{1}{1+\sum_{c=1}^{C-1} \exp \left(-w^{(c)^T} x\right)}=\hat{y}_0
+\end{equation}
+
+% Maximum Likelihood Estimation (MLE)
+Given a set of N training input-output pairs like {x\textsubscript{i}, y\textsubscript{i}}, i = 1,..., N, which are i.i.d, we can define the likehood as the product of likelihoods of each individual pairs.
+
+\begin{equation}
+    \mathcal{L}(\boldsymbol{w_c})=\prod_{i=1}^N l\left(\boldsymbol{w_c} \mid\left\{\boldsymbol{x}_i, y_i\right\}\right)=\prod_{i=1}^N P\left(y_i \mid \boldsymbol{x}_i ; \boldsymbol{w_c}\right)
     \end{equation}
+
+Hence the maximum likelihood estimation can be represented in the following ln function which converts the product into a sum.
+\begin{equation}
+    \hat{\boldsymbol{w}_c}=\underset{\boldsymbol{w}_c}{\operatorname{argmax}} \prod_{i=1}^N P\left(y_i \mid \boldsymbol{x}_i ; \boldsymbol{w}_c\right)=\underset{\boldsymbol{w}_c}{\operatorname{argmax}} \sum_{i=1}^N \sum_{c=0}^{C-1}\left(y_i \ln \left(g\left(\boldsymbol{x}_i ; \boldsymbol{w}_c\right)\right)\right)
+\end{equation}
+
+\begin{equation}
+    \ln \hat{w} =-\frac{1}{N} \sum_{i=1}^{N} \sum_{C=1}^{C-1} y_i\ln \left(\quad P(y_ \mid x_{j};w_{c})\right)
+\end{equation}
+
+We will now derive the learning procedure for the multinomial logistic classification using Gradient Descent optimisation method.
+
+\begin{equation}
+    \boldsymbol{w}_{t+1}=\boldsymbol{w}_t-\rho \frac{\partial E(\boldsymbol{w})}{\partial \boldsymbol{w}}
+\end{equation}
+
+
+$$
+\begin{aligned}
+    \frac{\partial E(\boldsymbol{w})}{\partial \boldsymbol{w}}=\frac{\partial\left(-\sum_{i=1}^N \sum_{c=1}^c y_i \cdot \ln \left(P\left(y_i \mid x_i ; w_c\right)\right)\right)}{\partial w_c} \\
+    = -\sum_{i=1}^N \sum_{c=1}^c \frac{\partial\left(y_i \cdot \ln \left(p\left(y_i \mid x_i ; w_c\right)\right)\right.}{\partial w_c}
+\end{aligned}
+$$
+
+Let P(y\textsubscript{i} $\mid$ x\textsubscript{i}; w\textsubscript{c}) be f(z). Using chain rule:
+
+\begin{equation}
+    \begin{aligned}
+        \frac{\partial \ln f(z)}{\partial z} & =\frac{\partial \ln f(z)}{\partial f(z)} \cdot \frac{\partial f(z)}{\partial z} \\
+        & =\frac{1}{f(z)} \cdot \frac{d f(z)}{\partial z}
+    \end{aligned}
+\end{equation}
+
+We can differentiate using: 
+
+\begin{equation}
+    \frac{\partial\left(y_i \cdot \ln \left(P\left(y_i \mid x_i ; w_c\right)\right)\right.}{\partial w_c}=y_i \cdot \frac{1}{P\left(y_i \mid x_{i} w_c\right)} \cdot \frac{\partial\left(P\left(y_i \mid x_i ; w_c\right)\right.}{\partial w_c}
+\end{equation}
+\linebreak
+
+If y = c, subbing equations (3) into (10) gives us:
+
+$$
+\begin{aligned}
+    \frac{\partial\left(P\left(y_i \mid x_i ; w_c\right)\right.}{\partial w_c} = \frac{\partial}{\partial w_c}\left(\frac{\exp \left(-w_c \cdot x_i \right)}{1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i \right)}\right)
+\end{aligned}
+$$
+
+Using quotient rule:
+
+
+\begin{align*}
+    & \frac{\partial}{\partial w_c}\left(\frac{\exp \left(-w_c \cdot x_i \right)}{1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i \right)}\right) \\
+    \\
+    & =\frac{\left(\frac{\partial}{\partial w_c} \exp \left(-w_c \cdot x_i\right)\right)\left(1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i\right)\right)+\left(\frac{\partial}{\partial w_c}\left(1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i\right)\right)\right)\left(\exp \left(-w_c \cdot x_i\right)\right)}{\left(1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i\right)\right)^2} \\
+    \\
+    & =\frac{\left(x_i \cdot \exp \left(-w_c \cdot x_i\right)\right)\left(1+\sum_{i=1}^{c-1} \exp \left(-w_c \cdot x_i\right)\right)+x_i \cdot \exp \left(-w_c \cdot x_i\right) \cdot\left(\exp \left(-w_c \cdot x_i\right)\right)}{\left(1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i\right)\right)^2} \\ 
+    \\
+    & =\frac{x_i \exp \left(-W_c \cdot x_i\right)\left(1+\sum_{c=1}^{c-1} \exp \left(-W_c \cdot x_i\right)-\exp \left(-W_c \cdot x_i\right)\right)}{\left(1+\sum_{c=1}^{c-1} \exp \left(-W_c \cdot x_i\right)\right)^2} \\
+    \\
+    & =\frac{x_i \cdot \exp \left(-w_c \cdot x_i\right)}{1+\sum_{c=1}^{c-1} \operatorname{cop}\left(-w_c \cdot x_i\right)} \cdot \frac{1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i\right)-\exp \left(-w_c \cdot x_i\right)}{1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i\right)} \\
+    \\
+    & =\frac{x_i \cdot \exp \left(-w_c \cdot x_i\right)}{1+\sum_{c=1}^{c-1} \exp \left(-w_c, x_i\right)} \cdot\left(\frac{1+\sum_{c=1}^{c-1} \exp \left(-w_c, x_i\right)}{1+\sum_{c=1}^{c-1} \exp \left(-w_c, x_i\right)}-\frac{\exp \left(-w_c \cdot x_i\right)}{1+\sum_{c=1}^{c-1} \exp \left(-w_{c i} x_i\right)}\right) \\
+    \\
+    & =x_i \cdot \hat{y}_c(1-\hat{y}_c) \numberthis \label{eqn}
+\end{align*}
+
+Subbing (11) back into (10):
+
+\begin{align*}
+    & \frac{\partial\left(P\left(y_i \mid x_i ; w_c\right)\right.}{\partial w_c} \\
+    & = y_i \cdot \frac{1}{P\left(y_i \mid x_{i} w_c\right)} \cdot \frac{\partial\left(P\left(y_i \mid x_i ; w_c\right)\right.}{\partial w_c} \\
+    & = y_i \cdot \frac{1}{\hat{y}_c} \cdot (x_i \cdot \hat{y}_c(1-\hat{y}_c)) \\
+    & = x_i(y_i-y_i \cdot \hat{y}_c) \numberthis \label{eqn}
+\end{align*}
+
+Putting them back together, we will sub (12) into the gradient descent rule (8)
+
+\begin{align*}
+    & \boldsymbol{w}_{t+1}=\boldsymbol{w}_t-\rho \frac{\partial E(\boldsymbol{w})}{\partial \boldsymbol{w}} \\
+    & =  \boldsymbol{w}_t-\rho (-\sum_{i=1}^N \sum_{c=1}^C \frac{\partial\left(y_i \cdot \ln \left(p\left(y_i \mid x_i ; w_c\right)\right)\right.}{\partial w_c} - \lambda \boldsymbol{w}) \\
+    & = \boldsymbol{w}_t+\rho (\sum_{i=1}^N (y_i-y_i \cdot \hat{y}_c)x_i - \lambda \boldsymbol{w}) \numberthis \label{eqn}
+\end{align*}
+
 
 \section{Question 2 (5 marks)}
 
-
-2.2. Answer:
-
+\subsection*{2.2. Answer:}
 % Q2.2 LinearSVM table
 \begin{table}[!hbt]
     \centering
@@ -47,7 +155,7 @@ Suppose there are C classes, {0, 1, ..., C -1}
     \label{tab:linearSVM}
 \end{table}
 
-2.3. Answer:
+\subsection*{2.3. Answer:}
 \begin{table}[!hbt]
     \centering
     \resizebox{0.8\columnwidth}{!}{%
@@ -65,9 +173,9 @@ Suppose there are C classes, {0, 1, ..., C -1}
     \label{tab:rbfSVM}
 \end{table}
 
-2.4. Answer:
+\subsection*{2.4. Answer:}
 
-\begin{table}[!hbt]
+\begin{table}[!htb]
     \centering
     \begin{tabular}{ll}
         \hline
