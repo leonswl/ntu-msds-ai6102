@@ -2,10 +2,14 @@
 \usepackage{graphicx}
 \usepackage[table,xcdraw]{xcolor}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
 \usepackage{indentfirst}
 \usepackage{float}
 \usepackage{flafter}
+\usepackage{chngcntr}
+\counterwithin*{equation}{section}
+\counterwithin*{equation}{subsection}
 \usepackage{geometry}
  \geometry{
  a4paper,
@@ -15,7 +19,7 @@
  }
 \title{ Machine Learning Methodologies and Applications (AI6012) Individual Assignment}
 \author{Leon Sun (G2204908A)}
-\date{30 September 2023}
+\date{29 September 2023}
 
 \begin{document}
 \maketitle
@@ -36,7 +40,7 @@ Since the sum of all the conditional probabilities for the softmax is 1, we can 
     \sum_{c=0}^{C} \quad P(y=c \mid x)=1
 \end{equation}
 
-By introducing the set of logits into we can arrived at the following parametric equations for multinomial logistic regression. Suppose there are C classes, {0, 1, ..., C-1}:
+By introducing the set of logits into we can arrive at the following parametric equations for multinomial logistic regression. Suppose there are C classes, {0, 1, ..., C-1}:
 
 \begin{equation}
     For\;c>0: \quad P(y=c \mid x)=\frac{\exp \left(-w^{(c)^T} x\right)}{1+\sum_{c=1}^{C-1} \exp \left(-w^{(c)^T} x\right)}=\hat{y}_c
@@ -59,7 +63,7 @@ Hence the maximum likelihood estimation can be represented in the following ln f
 \end{equation}
 
 \begin{equation}
-    \ln \hat{w} =-\frac{1}{N} \sum_{i=1}^{N} \sum_{C=1}^{C-1} y_i\ln \left(\quad P(y_ \mid x_{j};w_{c})\right)
+    \ln \hat{w} =-\frac{1}{N} \sum_{i=1}^{N} \sum_{C=1}^{C-1} y_i\ln\left(\quad P(y_ \mid x_{j};w_{c})\right)
 \end{equation}
 
 We will now derive the learning procedure for the multinomial logistic classification using Gradient Descent optimisation method.
@@ -85,7 +89,7 @@ Let P(y\textsubscript{i} $\mid$ x\textsubscript{i}; w\textsubscript{c}) be f(z).
     \end{aligned}
 \end{equation}
 
-We can differentiate using: 
+Applying the chain rule logic, we can obtain the derivative using: 
 
 \begin{equation}
     \frac{\partial\left(y_i \cdot \ln \left(P\left(y_i \mid x_i ; w_c\right)\right)\right.}{\partial w_c}=y_i \cdot \frac{1}{P\left(y_i \mid x_{i} w_c\right)} \cdot \frac{\partial\left(P\left(y_i \mid x_i ; w_c\right)\right.}{\partial w_c}
@@ -99,8 +103,9 @@ $$
     \frac{\partial\left(P\left(y_i \mid x_i ; w_c\right)\right.}{\partial w_c} = \frac{\partial}{\partial w_c}\left(\frac{\exp \left(-w_c \cdot x_i \right)}{1+\sum_{c=1}^{c-1} \exp \left(-w_c \cdot x_i \right)}\right)
 \end{aligned}
 $$
+\linebreak
 
-Using quotient rule:
+We will apply quotient rule to obtain the first order derivative:
 
 
 \begin{align*}
@@ -132,8 +137,8 @@ Putting them back together, we will sub (12) into the gradient descent rule (8)
 
 \begin{align*}
     & \boldsymbol{w}_{t+1}=\boldsymbol{w}_t-\rho \frac{\partial E(\boldsymbol{w})}{\partial \boldsymbol{w}} \\
-    & =  \boldsymbol{w}_t-\rho (-\sum_{i=1}^N \sum_{c=1}^C \frac{\partial\left(y_i \cdot \ln \left(p\left(y_i \mid x_i ; w_c\right)\right)\right.}{\partial w_c} - \lambda \boldsymbol{w}) \\
-    & = \boldsymbol{w}_t+\rho (\sum_{i=1}^N (y_i-y_i \cdot \hat{y}_c)x_i - \lambda \boldsymbol{w}) \numberthis \label{eqn}
+    & =  \boldsymbol{w}_t-\rho \left(-\sum_{i=1}^N \sum_{c=1}^C \frac{\partial\left(y_i \cdot \ln \left(p\left(y_i \mid x_i ; w_c\right)\right)\right.}{\partial w_c} - \lambda \boldsymbol{w}\right) \\
+    & = \boldsymbol{w}_t+\rho \left(\sum_{i=1}^N \left(y_i-y_i \cdot \hat{y}_c\right)x_i - \lambda \boldsymbol{w}\right) \numberthis \label{eqn}
 \end{align*}
 
 
@@ -148,7 +153,7 @@ Putting them back together, we will sub (12) into the gradient descent rule (8)
         \begin{tabular}{lllll}
             \hline
             \multicolumn{1}{|c|}{\textbf{C=0.01}} & \multicolumn{1}{c|}{\textbf{C=0.05}} & \multicolumn{1}{c|}{\textbf{C=0.1}} & \multicolumn{1}{c|}{\textbf{C=0.5}} & \multicolumn{1}{c|}{\textbf{C=1}} \\ \hline
-            \multicolumn{1}{|c|}{0.84958} & \multicolumn{1}{c|}{0.85038} & \multicolumn{1}{c|}{{\color[HTML]{FE0000} 0.85038}} & \multicolumn{1}{c|}{0.85050} & \multicolumn{1}{c|}{0.85032} \\ \hline
+            \multicolumn{1}{|c|}{0.84402} & \multicolumn{1}{c|}{0.84610} & \multicolumn{1}{c|}{ 0.84644} & \multicolumn{1}{c|}{0.84693} & \multicolumn{1}{c|}{{\color[HTML]{FE0000}0.84721}} \\ \hline
         \end{tabular}%
     }    
     \caption{Classification accuracy on running linear kernel SVM on 3-fold cross-validation using training set with different values of the parameter C in \{0.01, 0.05, 0.1, 0.5, 1\}}
@@ -162,11 +167,11 @@ Putting them back together, we will sub (12) into the gradient descent rule (8)
         \begin{tabular}{|l|c|c|c|c|c|}
         \hline
         \multicolumn{1}{|c|}{} & \textbf{g=0.01} & \textbf{g=0.05} & \textbf{g=0.1} & \textbf{g=0.5} & \textbf{g=1} \\ \hline
-        C=0.01 & 0.76377 & 0.76433 & 0.77096 & 0.76377 & 0.76377 \\ \hline
-        \textbf{C=0.05} & 0.78871 & 0.83293 & 0.83029 & 0.76961 & 0.76377 \\ \hline
-        \textbf{C=0.1} & 0.83226 & 0.83754 & 0.83717 & 0.79092 & 0.76377 \\ \hline
-        \textbf{C=0.5} & 0.84411 & 0.84546 & 0.84559 & 0.82507 & 0.77772 \\ \hline
-        \textbf{C=1} & {\color[HTML]{FE0000} 0.84682} & 0.84589 & 0.84651 & 0.82956 & 0.78668 \\ \hline
+        \textbf{C=0.01} & 0.75919 & 0.81991 & 0.81985 & 0.75919 & 0.75919 \\ \hline
+        \textbf{C=0.05} & 0.83121 & 0.83575 & 0.83425 & 0.78916 & 0.75919 \\ \hline
+        \textbf{C=0.1} & 0.83772 & 0.83965 & 0.83876 & 0.80612 & 0.76199 \\ \hline
+        \textbf{C=0.5} & 0.84297 & 0.84577 & 0.84681 & 0.83216 & 0.78975 \\ \hline
+        \textbf{C=1} & 0.84442 & 0.84675 & {\color[HTML]{FE0000} 0.84742} & 0.83661 & 0.79829 \\ \hline
         \end{tabular}%
     }
     \caption{Classification accuracy on running rbf kernel SVM on 3-fold cross-validation using training set with parameter gamma in \{0.01, 0.05, 0.1, 0.5, 1\} and different values of the parameter C in \{0.01, 0.05, 0.1, 0.5, 1\}}
@@ -179,27 +184,82 @@ Putting them back together, we will sub (12) into the gradient descent rule (8)
     \centering
     \begin{tabular}{ll}
         \hline
-        \multicolumn{1}{|c|}{\textbf{}} & \multicolumn{1}{c|}{\textbf{kernal=Linear, C=1}} \\ \hline
-        \multicolumn{1}{|c|}{\textbf{Accuracy of SVMs}} & \multicolumn{1}{c|}{0.84733} \\ \hline
+        \multicolumn{1}{|c|}{\textbf{}} & \multicolumn{1}{c|}{\textbf{kernel=RBF, C=1, gamma=0.1}} \\ \hline
+        \multicolumn{1}{|c|}{\textbf{Accuracy of SVMs}} & \multicolumn{1}{c|}{0.84614} \\ \hline
     \end{tabular}
-    \caption{Classification accuracy on running linear kernel SVM on 3-fold cross-validation using test set with different values with C=1}
+    \caption{Classification accuracy on running rbf kernel SVM on 3-fold cross-validation using test set with C=1 and gamma=0.1}
     \label{tab:OptimalSVM}
 \end{table}
 
-\begin{table}[]
-    \centering
-    \begin{tabular}{ll}
-    \multicolumn{1}{c}{\textbf{}} & \multicolumn{1}{c}{\textbf{kernal=Linear, C=1}} \\
-    \multicolumn{1}{c}{\textbf{Accuracy of SVMs}} & \multicolumn{1}{c}{0.84733} \\
-     &  \\
-     & 
-    \end{tabular}
-    \caption{Classification accuracy on running linear kernel SVM on 3-fold cross-validation using test set with different values with C=1}
-    \label{tab:OptimalSVM}
-    \end{table}
-
 \section{Question 3 (5 marks)}
 
+Linear soft margin SVMs:
+\begin{equation}
+    \min _{\boldsymbol{w}, b, \xi_i} \frac{\|\boldsymbol{w}\|_2^2}{2}+C\left(\sum_{i=1}^N \xi_i\right)
+\end{equation}
+
+Empirical Structural Risk Minimisation
+
+\begin{equation}
+    \widehat{\boldsymbol{\theta}}=\arg \min _{\boldsymbol{\theta}} \sum_{i=1}^N \ell\left(f\left(\boldsymbol{x}_i ; \boldsymbol{\theta}\right), y_i\right)+\lambda \Omega(\boldsymbol{\theta})
+\end{equation}
+
+To reformulate the optimisation of linear non SVMs as an instance of empirical structural risk minimisation, we will leverage on hinge loss. \\
+
+\begin{center}
+    if $\left(w \cdot x_i+b\right)_{y_i} \geqslant 1$, 
+    \begin{equation}
+        \varepsilon_i^*(w, b)=0
+    \end{equation}
+    if $(w, x ;+b) y_i<1$,
+    \begin{align*}
+        & \varepsilon_i^*(w, b)=1-\left(w, x_i+b\right) y_i \numberthis \label{eqn} \\  
+        & \therefore \varepsilon_i=\max \left(0,1-\left(w_i x_i+b\right)_{y_i}\right) \numberthis \label{eqn}
+    \end{align*} 
+    
+\end{center}
+
+We can then derive the empirical structural risk minimisation:
+\begin{equation}
+    \sum_{i=1}^N \varepsilon_i= \sum_{i=1}^N \max \left(0, 1-\left(w_i \cdot x_i+b\right)_{y_i}\right)
+\end{equation}
+
+Substituting them back into the objective will give us the hinge loss reformulation of the linear non SVM.
+
+\begin{equation}
+    \min _{w, b}\|w\|_2^2+C \sum_{i=1}^N \max \left(0,1-\left(w_i x_i+b\right) y_i\right)
+\end{equation}
+
 \section{Question 4 (5 marks)}
+
+The regularised linear regression can be represented as an optimisation problem given by this formula:
+
+\begin{align*}
+    \hat{w}=\arg\operatorname*{min}_{w}\frac{1}{2}\sum_{i=1}^{N}(w\cdot x_{i}-y_{i})^{2}+\frac{\lambda}{2}\|w\|_{2}^{2} \numberthis \label{eqn}
+\end{align*} 
+
+Using the kernel trick, we can map the current dimensional space into a feature space to extend this regularised linear regression for solving non linear problems.
+
+\begin{align*}
+    \hat{w}=\arg\operatorname*{min}_{w}\frac{1}{2}~\sum_{i=1}^{N}~~(w \cdot \Psi(x_{i})-y_{i})^2 + \frac{\lambda}{2}\|w\|_{2}^{2} \numberthis \label{eqn}
+\end{align*}
+
+To obtain a closed form solution, the derivative of the objective w.r.t. w will be set to 0. Solving the resultant equation:
+
+\begin{align*}
+    & \frac{\partial\left(\frac{1}{2}\sum_{i=1}^{N}(w\cdot \psi(x_{i})-y_{i})^{2}+\frac{\lambda}{2}\left|w\right|_{2}^{2}\right)}{\partial w}=0 \\
+    & \frac{\partial\left(\frac{1}{2}\sum_{i=1}^{N}(w\cdot \psi(x_{i})-y_{i})^{2}\right)}{\partial w}+ {\frac{\partial \left(\frac{\lambda}{2}\left|w\right|_{2}^{2}\right)}{\partial w}} = 0 \\
+    & \left(\sum_{i=1}^{N}\left(\psi(x_{i})\right) \left(\psi(x_{i}^{T})\right)\right)w-\sum_{i=1}^{N}y_{i}\left(\psi (x_{i}) \right) + \lambda w=0 \numberthis \label{eqn}
+\end{align*}
+
+Let $\sum_{i=1}^{N}y_{i}\left(\psi (x_{i}) \right) = K$, where K represents the sum of inner product between mapped instances. Subbing this back to (3) gives us:
+
+\begin{align*}
+    &\mathbf{KK^Tw}-\mathbf{Ky}+ \mathbf{\lambda Iw}=0 \\
+    & (\mathbf{KK^T}+\mathbf{\lambda I})\mathbf{w} - \mathbf{Ky}=0 \\
+    & (\mathbf{KK^T}+\mathbf{\lambda I})\mathbf{w} = \mathbf{Ky} \\
+    & \mathbf{w}=(\mathbf{KK^T}+\mathbf{\lambda I})^{-1}\mathbf{Ky} \numberthis \label{eqn}
+\end{align*}
+
 
 \end{document}
