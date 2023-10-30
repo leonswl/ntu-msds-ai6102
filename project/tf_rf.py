@@ -4,7 +4,7 @@ import tensorflow as tf
 import tensorflow_decision_forests as tfdf
 import pandas as pd
 
-label = 'Transported'
+
 
 def tf_rf (train_df:pd.DataFrame, valid_df:pd.DataFrame, test_df:pd.DataFrame):
     """
@@ -15,6 +15,8 @@ def tf_rf (train_df:pd.DataFrame, valid_df:pd.DataFrame, test_df:pd.DataFrame):
         rf []: tensorflow random forest model
         output []:
     """
+
+    label = 'Transported'
     ## load as tensorflow dataset
     train_ds = tfdf.keras.pd_dataframe_to_tf_dataset(train_df, label=label)
     valid_ds = tfdf.keras.pd_dataframe_to_tf_dataset(valid_df,label=label)
