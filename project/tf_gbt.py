@@ -1,175 +1,201 @@
 # tensorflow decision forests
-
-import tensorflow as tf
+import os
 import tensorflow_decision_forests as tfdf
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def tf_gbt (train_df:pd.DataFrame, valid_df:pd.DataFrame, test_df:pd.DataFrame, select_features:list=None):
-    """
-    Args:
-        train_df, valid_df, test_df [pandas DataFrame]: pandas df of training, validation and test set
-        select_features [list]: Optional. list of features to be used in model fitting
+class GradientBoostedTrees:
+    def __init__(self, train_df:pd.DataFrame, valid_df:pd.DataFrame, test_df:pd.DataFrame, label:str):
+        print("============ Instantiating GBT class ============")
+        self.train_df = train_df
+        self.valid_df = valid_df
+        self.test_df = test_df
+        self.label = label
+        self.submission_id = test_df.PassengerId
+        
+
+    def feature_selection(self, selected_features:list=None):
+        """
+        Function to update training, validation and test data with selected features
+        """
+        print("============ Pruning Features ============")
+        self.selected_features = selected_features
+
+        # update datasets
+        self.train_df = self.train_df[selected_features]
+        self.valid_df = self.valid_df[selected_features]
+        selected_features.remove('Transported')
+        self.test_df = self.test_df[selected_features]
+        
+    def create_tuner(self, num_trials:int=20):
+        """ Function to create a Random Search tuner"""
+
+        print("============ Creating RandomSearch Tuner ============")
+        self._tuner = tfdf.tuner.RandomSearch(num_trials=num_trials, use_predefined_hps=True)
+
+    def create_gbt_model(self):
+        """ Function to instantiate GBT model"""
+
+        print("============ Instantiating GBT model ============")
+        ## convert pandas dataframe to tensorflow dataset
+        self.train_ds = tfdf.keras.pd_dataframe_to_tf_dataset(self.train_df, label=self.label)
+        self.valid_ds = tfdf.keras.pd_dataframe_to_tf_dataset(self.valid_df,label=self.label)
+        self.test_ds = tfdf.keras.pd_dataframe_to_tf_dataset(self.test_df)
+
+        # instantiate model with tuner
+        self._model = tfdf.keras.GradientBoostedTreesModel(tuner=self._tuner)
+        self._model.compile(metrics=["accuracy"]) # compile accuracy metrics
+
+    def run_experiments (self):
+        """Function to run experiments"""
+        print("============ Running Experiment ============")
+        self.history = self._model.fit(self.train_ds)
+        return self.history
+
+    def evaluate(self):
+        """Function to evaluate model with validation set"""
+        print("============ Evaluating ============")
+        self.evaluation = self._model.evaluate(x=self.valid_ds,return_dict=True)
+
+        return self.evaluation
+
+    def predict(self):
+        """
+        Function to make predictions
+        
+        Returns:
+            predictions: 
+            output [pandas dataframe]: submission output pd dataframe
+
+        """
+        print("============ Predicting ============")
+        self.predictions = self._model.predict(self.test_ds)
+        n_predictions = (self.predictions > 0.5).astype(bool)
+        self.output = pd.DataFrame({
+            'PassengerId': self.submission_id,
+            'Transported': n_predictions.squeeze()
+            })
+        
+        print(self._model.summary())
+        return self.predictions, self.output
     
-    Returns:
-        model []: tensorflow random forest model
-        output [pandas DataFrame]: prediction output
-    """
+    def plot_training_logs(self):
+        """Visualise training logs of evaluated model"""
 
-    label = 'Transported'
-    submission_id = test_df.PassengerId
+        self.training_logs = self._model.make_inspector().training_logs()
 
-    if select_features is not None:
-        ## prune features
-        train_df = train_df[select_features]
-        valid_df = valid_df[select_features]
-        select_features.remove('Transported')
-        test_df = test_df[select_features]
+        plt.figure(figsize=(12, 4))
 
-    ## load as tensorflow dataset
-    train_ds = tfdf.keras.pd_dataframe_to_tf_dataset(train_df, label=label)
-    valid_ds = tfdf.keras.pd_dataframe_to_tf_dataset(valid_df,label=label)
-    test_ds = tfdf.keras.pd_dataframe_to_tf_dataset(test_df)
+        plt.subplot(1, 2, 1)
+        plt.plot([log.num_trees for log in self.training_logs], [log.evaluation.accuracy for log in self.training_logs])
+        plt.xlabel("Number of trees")
+        plt.ylabel("Accuracy (out-of-bag)")
 
-    ## Create a Random Search tuner with 50 trials and automatic hp configuration.
-    tuner = tfdf.tuner.RandomSearch(num_trials=50, use_predefined_hps=True)
+        plt.subplot(1, 2, 2)
+        plt.plot([log.num_trees for log in self.training_logs], [log.evaluation.loss for log in self.training_logs])
+        plt.xlabel("Number of trees")
+        plt.ylabel("Logloss (out-of-bag)")
 
-    model = tfdf.keras.GradientBoostedTreesModel(tuner=tuner)
-    model.compile(metrics=["accuracy"]) # Optional, you can use this to include a list of eval metrics
-
-    ## training the model
-    history = model.fit(x=train_ds)
-    print(f"Train Model Accuracy: {history.history['accuracy']}")
-
-    ## Evaluate using validation set
-    evaluation = model.evaluate(x=valid_ds,return_dict=True)
-    evaluation_accuracy = evaluation['accuracy']
-    print(f"Test accuracy with the TF-DF hyper-parameter tuner: {evaluation_accuracy:.4f}")
-
-    # for name, value in evaluation.items():
-    #     print(f"{name}: {value:.4f}")
-
-    ## get predictions
-    predictions = model.predict(test_ds)
-    n_predictions = (predictions > 0.5).astype(bool)
-    output = pd.DataFrame({
-        'PassengerId': submission_id,
-        'Transported': n_predictions.squeeze()
-        })
+        plt.show()
+        return self.training_logs
     
-    return model, output
+    def plot_tuning_logs (self):
+        """Function to plot tuning logs to show optimal hyper parameters"""
 
-def plot_training_logs (model):
-    """
-    Visualise training logs of evaluated model
-    """
+        # Display the tuning logs.
+        self.tuning_logs = self._model.make_inspector().tuning_logs()
 
-    logs = model.make_inspector().training_logs()
+        # Best hyper-parameters.
+        print(self.tuning_logs[self.tuning_logs.best].iloc[0])
 
-    plt.figure(figsize=(12, 4))
+        # plots
+        plt.figure(figsize=(10, 5))
+        plt.plot(self.tuning_logs["score"], label="current trial")
+        plt.plot(self.tuning_logs["score"].cummax(), label="best trial")
+        plt.xlabel("Tuning step")
+        plt.ylabel("Tuning score")
+        plt.legend()
+        plt.show()
 
-    plt.subplot(1, 2, 1)
-    plt.plot([log.num_trees for log in logs], [log.evaluation.accuracy for log in logs])
-    plt.xlabel("Number of trees")
-    plt.ylabel("Accuracy (out-of-bag)")
+        return self.tuning_logs
+    
+    def plot_variable_importances(self, key:str='INV_MEAN_MIN_DEPTH'):
+        """
+        Function to plot variable importance 
 
-    plt.subplot(1, 2, 2)
-    plt.plot([log.num_trees for log in logs], [log.evaluation.loss for log in logs])
-    plt.xlabel("Number of trees")
-    plt.ylabel("Logloss (out-of-bag)")
+        Args:
+            key [str]: key for variable importance. Available keys are: INV_MEAN_MIN_DEPTH, NUM_AS_ROOT, SUM_SCORE, NUM_NODES. Default is INV_MEAN_MIN_DEPTH
+        """
 
-    plt.show()
+        self.variable_importances = self._model.make_inspector().variable_importances()
 
-def plot_tuning_logs (model):
-    """
-    function to plot tuning logs to show optimal hyper parameters
-    """
+        plt.figure(figsize=(12, 4))
 
-    # Display the tuning logs.
-    tuning_logs = model.make_inspector().tuning_logs()
+        # Mean decrease in AUC of the class 1 vs the others.
+        variable_importance_metric = key
+        variable_importances = self.variable_importances[variable_importance_metric]
 
-    # Best hyper-parameters.
-    print(tuning_logs[tuning_logs.best].iloc[0])
+        # Extract the feature name and importance values.
+        #
+        # `variable_importances` is a list of <feature, importance> tuples.
+        feature_names = [vi[0].name for vi in variable_importances]
+        feature_importances = [vi[1] for vi in variable_importances]
+        # The feature are ordered in decreasing importance value.
+        feature_ranks = range(len(feature_names))
 
-    # plots
-    plt.figure(figsize=(10, 5))
-    plt.plot(tuning_logs["score"], label="current trial")
-    plt.plot(tuning_logs["score"].cummax(), label="best trial")
-    plt.xlabel("Tuning step")
-    plt.ylabel("Tuning score")
-    plt.legend()
-    plt.show()
+        bar = plt.barh(feature_ranks, feature_importances, label=[str(x) for x in feature_ranks])
+        plt.yticks(feature_ranks, feature_names)
+        plt.gca().invert_yaxis()
 
+        # Label each bar with values
+        for importance, patch in zip(feature_importances, bar.patches):
+            plt.text(patch.get_x() + patch.get_width(), patch.get_y(), f"{importance:.4f}", va="top")
 
-def plot_variable_importance(model,key):
-    """
-    Function to plot variable importance 
+        plt.xlabel(variable_importance_metric)
+        plt.title("Mean decrease in AUC of the class 1 vs the others")
+        plt.tight_layout()
+        plt.show()
 
-    Args:
-        model []:
-        key [str]: key for variable importance. Available keys are: INV_MEAN_MIN_DEPTH, NUM_AS_ROOT, SUM_SCORE, NUM_NODES
-    """
-
-    inspector = model.make_inspector()
-
-    plt.figure(figsize=(12, 4))
-
-    # Mean decrease in AUC of the class 1 vs the others.
-    variable_importance_metric = key
-    variable_importances = inspector.variable_importances()[variable_importance_metric]
-
-    # Extract the feature name and importance values.
-    #
-    # `variable_importances` is a list of <feature, importance> tuples.
-    feature_names = [vi[0].name for vi in variable_importances]
-    feature_importances = [vi[1] for vi in variable_importances]
-    # The feature are ordered in decreasing importance value.
-    feature_ranks = range(len(feature_names))
-
-    bar = plt.barh(feature_ranks, feature_importances, label=[str(x) for x in feature_ranks])
-    plt.yticks(feature_ranks, feature_names)
-    plt.gca().invert_yaxis()
-
-    # Label each bar with values
-    for importance, patch in zip(feature_importances, bar.patches):
-        plt.text(patch.get_x() + patch.get_width(), patch.get_y(), f"{importance:.4f}", va="top")
-
-    plt.xlabel(variable_importance_metric)
-    plt.title("Mean decrease in AUC of the class 1 vs the others")
-    plt.tight_layout()
-    plt.show()
+        return self.variable_importances
 
 def main():
-    """ Main function"""
     ## load train and validation dataset
     train_df = pd.read_csv("data/train_ds_pd.csv")
     valid_df = pd.read_csv("data/valid_ds_pd.csv")
     test_df = pd.read_csv("data/test_ds_pd.csv")
 
-    select_features = ['CryoSleep','Age','RoomService','Cabin_num','FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck', 'HomePlanet','Destination', 'Side', 'Deck', 'Transported']
+    select_features = ['CryoSleep','Age','RoomService','Cabin_num','FoodCourt', 'ShoppingMall', 'Spa', 'HomePlanet', 'Side', 'Deck', 'Transported', 'VRDeck','Destination']
 
-    # tensorflow random forest
-    model, output = tf_gbt(
-            train_df=train_df, 
-            valid_df=valid_df, 
-            test_df=test_df, 
-            select_features=select_features)
+    label = 'Transported'
 
-    ## render visuals
-    ## uncomment accordingly to render the visuals
+    gbt = GradientBoostedTrees(train_df=train_df, valid_df=valid_df, test_df=test_df,label=label)
+    gbt.feature_selection(selected_features=select_features)
+    gbt.create_tuner(num_trials=50)
+    gbt.create_gbt_model()
 
-    # training log visuals
-    plot_training_logs(model)
+    # run experiment
+    gbt_model_history = gbt.run_experiments()
+    print(f"Train Model Accuracy: {gbt_model_history.history['accuracy']}")
 
-    # tuning logs visuals
-    plot_tuning_logs(model)
+    # evaluate
+    gbt_model_evaluation = gbt.evaluate()
+    evaluation_accuracy = gbt_model_evaluation['accuracy']
+    print(f"Test accuracy with the TF-DF hyper-parameter tuner: {evaluation_accuracy:.4f}")
 
-    # variable importance visuals
-    # plot_variable_importance(model,key='INV_MEAN_MIN_DEPTH')
+    # predict
+    gbt_model_predictions, gbt_model_output = gbt.predict()
 
-    print(model.summary())
+    # training logs
+    gbt_model_training_logs = gbt.plot_training_logs()
 
-    output.to_csv("submissions/tf_gbt.csv",index=False)
+    # tuning logs
+    gbt_model_tuning_logs = gbt.plot_tuning_logs()
+
+    # variable importance
+    gbt_model_variable_importances = gbt.plot_variable_importances()
+
+    os.makedirs('submissions', exist_ok=True) 
+    gbt_model_output.to_csv("submissions/tf_gbt.csv",index=False)
 
 if __name__ == "__main__":
     main()

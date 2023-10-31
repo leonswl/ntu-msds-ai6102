@@ -14,7 +14,7 @@ TARGET_COLUMN_NAME = 'Transported'
 
 NUMERIC_FEATURE_NAMES = ['CryoSleep','Age','VIP','RoomService','Cabin_num','FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
 
-CATEGORICAL_FEATURE_NAMES = ['HomePlanet','Destination', 'Name', 'Side', 'Deck']
+CATEGORICAL_FEATURE_NAMES = ['HomePlanet','Destination', 'Side', 'Deck']
 
 def run_experiment(model, train_data, valid_data, num_epochs=1, batch_size=None):
 
@@ -128,6 +128,7 @@ def create_target_encoder(train_data):
     encoded_features = []
     for feature_name in inputs:
         if feature_name in CATEGORICAL_FEATURE_NAMES:
+            print(feature_name)
             # Get the vocabulary of the categorical feature.
             vocabulary = sorted(
                 [str(value) for value in list(train_data[feature_name].unique())]

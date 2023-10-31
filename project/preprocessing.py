@@ -38,11 +38,14 @@ def preprocessing(df):
     num_feats = ['VIP', 'CryoSleep', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
     # cat_feats = ['HomePlanet','Cabin','Destination','RoomService','Age']
 
-    df[num_feats] = df[num_feats].fillna(value=0)
-    df.isnull().sum().sort_values(ascending=False)
+    cat_feats = ['HomePlanet','Destination', 'Side', 'Deck']
 
+    # fillna
+    df[num_feats] = df[num_feats].fillna(value=0) # with 0
+    df[cat_feats] = df[cat_feats].fillna(df.mode().iloc[0]) # with mode
+
+    # convert boolean columns to int
     col_lst = ["Transported","VIP","CryoSleep"]
-
     df = convert_bool_to_int(df, col_lst)
 
     # split cabin into columns - Deck, Cabin_num and Side
@@ -54,6 +57,8 @@ def preprocessing(df):
         df = df.drop('Cabin', axis=1)
     except KeyError:
         print("Field does not exist")
+
+    
 
     return df
 
