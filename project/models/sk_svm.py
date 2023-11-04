@@ -99,16 +99,16 @@ class SVM:
         """Function to perform GridSearch to obtain optimal hyperparameters"""
         logging.info("============ Executing GridSearch for model hyperparameters ============")
         clf = svm.SVC()
-        clf.fit(self.X_train,self.y_train)
+        clf.fit(self.X_train,self.y_train.ravel())
         param_grid = dict(kernel=kernels, C=c, gamma=gammas)
         grid = GridSearchCV(
             clf, 
             param_grid, 
-            cv=10, 
+            cv=5, 
             n_jobs=-1, 
             verbose=3,
             scoring='accuracy')
-        grid.fit(self.X_train, self.y_train)
+        grid.fit(self.X_train, self.y_train.ravel())
         best_params = grid.best_params_
 
         logging.info("*********** GridSearchCV completed successfully")
@@ -136,7 +136,7 @@ class SVM:
             
     def run_experiments(self):
         logging.info("============ Running Experiment ============")
-        self._model.fit(self.X_train, self.y_train)
+        self._model.fit(self.X_train, self.y_train.ravel())
         logging.info("*********** Experiment completed successfully ***********")
 
     def evaluate(self):
@@ -178,7 +178,7 @@ def sk_svm():
     current_time = datetime.datetime.now()
 
     # configure logging
-    log_filename = f"logs/svm/svm_output_{current_time}" 
+    log_filename = f".log/svm/svm_output_{current_time}" 
     os.makedirs(os.path.dirname(log_filename),exist_ok=True)
     file_handler = logging.FileHandler(log_filename, mode="w", encoding=None, delay=False)
     logging.basicConfig(filename=log_filename, level=logging.INFO)
@@ -190,7 +190,8 @@ def sk_svm():
     select_features = ['CryoSleep','Age','RoomService','Cabin_num','FoodCourt', 'ShoppingMall', 'Spa', 'HomePlanet', 'Side', 'Deck', 'Transported', 'VRDeck','Destination']
     logging.info("Feature selection will be executed over the following selected features: {%s}", select_features)
 
-    kernels = ['linear', 'rbf', 'poly', 'sigmoid']
+    # kernels = ['linear', 'rbf', 'poly', 'sigmoid']
+    kernels = ['linear']
     # c = [1e-5, 1e-4, 1e-3, 1e-2, 0.1, 1, 10, 1e2, 1e3, 1e4, 1e5]
     c = [0.1, 1, 10]
     gammas = [0.1, 1, 10]
