@@ -105,7 +105,6 @@ class SVM:
             clf, 
             param_grid, 
             cv=5, 
-            n_jobs=-1, 
             verbose=3,
             scoring='accuracy')
         grid.fit(self.X_train, self.y_train.ravel())
@@ -191,7 +190,7 @@ def sk_svm():
     logging.info("Feature selection will be executed over the following selected features: {%s}", select_features)
 
     # kernels = ['linear', 'rbf', 'poly', 'sigmoid']
-    kernels = ['linear']
+    kernels = ['linear','rbf']
     # c = [1e-5, 1e-4, 1e-3, 1e-2, 0.1, 1, 10, 1e2, 1e3, 1e4, 1e5]
     c = [0.1, 1, 10]
     gammas = [0.1, 1, 10]
