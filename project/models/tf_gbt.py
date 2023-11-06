@@ -36,6 +36,7 @@ class GradientBoostedTrees:
 
         print("============ Creating RandomSearch Tuner ============")
         self._tuner = tfdf.tuner.RandomSearch(num_trials=num_trials, use_predefined_hps=True)
+        
 
     def create_gbt_model(self):
         """ Function to instantiate GBT model"""
@@ -53,7 +54,7 @@ class GradientBoostedTrees:
     def run_experiments (self):
         """Function to run experiments"""
         print("============ Running Experiment ============")
-        self.history = self._model.fit(self.train_ds)
+        self.history = self._model.fit(self.train_ds, verbose=2)
         return self.history
 
     def evaluate(self):
