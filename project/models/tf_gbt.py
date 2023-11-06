@@ -1,19 +1,23 @@
-# tensorflow decision forests
 import os
+import tensorflow as tf
 import tensorflow_decision_forests as tfdf
+from sklearn.metrics import classification_report
+# from tensorflow import keras
+# from tensorflow.keras import metrics
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 class GradientBoostedTrees:
-    def __init__(self, train_df:pd.DataFrame, valid_df:pd.DataFrame, test_df:pd.DataFrame, label:str):
+    def __init__(self, train_df:pd.DataFrame, valid_df:pd.DataFrame, test_df:pd.DataFrame, label:str, threshold:float=0.5):
         print("============ Instantiating GBT class ============")
         self.train_df = train_df
         self.valid_df = valid_df
         self.test_df = test_df
         self.label = label
         self.submission_id = test_df.PassengerId
+        self.threshold = threshold
         
-
     def feature_selection(self, selected_features:list=None):
         """
         Function to update training, validation and test data with selected features
@@ -56,8 +60,21 @@ class GradientBoostedTrees:
         """Function to evaluate model with validation set"""
         print("============ Evaluating ============")
         self.evaluation = self._model.evaluate(x=self.valid_ds,return_dict=True)
+        y_pred = self._model.predict(self.valid_ds)
+        y_true = np.reshape(self.valid_df[self.label].values, (-1,1))
 
-        return self.evaluation
+        self.metrics = {}
+        precision_metric = tf.keras.metrics.Precision()
+        precision_metric.update_state(y_true,y_pred)
+        self.metrics['Precision'] = precision_metric.result().numpy()
+
+        f1_score = tf.keras.metrics.F1Score()
+        f1_score.update_state(y_true,y_pred)
+        self.metrics['f1_score'] = f1_score.result().numpy()[0]
+
+        self.classification_report = classification_report(y_true=y_true, y_pred=(y_pred > self.threshold).astype(bool))
+
+        return self.evaluation, self.metrics, self.classification_report
 
     def predict(self):
         """
@@ -70,7 +87,7 @@ class GradientBoostedTrees:
         """
         print("============ Predicting ============")
         self.predictions = self._model.predict(self.test_ds)
-        n_predictions = (self.predictions > 0.5).astype(bool)
+        n_predictions = (self.predictions > self.threshold).astype(bool)
         self.output = pd.DataFrame({
             'PassengerId': self.submission_id,
             'Transported': n_predictions.squeeze()
@@ -157,46 +174,7 @@ class GradientBoostedTrees:
         plt.show()
 
         return self.variable_importances
-
-def main():
-    ## load train and validation dataset
-    train_df = pd.read_csv("data/train_ds_pd.csv")
-    valid_df = pd.read_csv("data/valid_ds_pd.csv")
-    test_df = pd.read_csv("data/test_ds_pd.csv")
-
-    select_features = ['CryoSleep','Age','RoomService','Cabin_num','FoodCourt', 'ShoppingMall', 'Spa', 'HomePlanet', 'Side', 'Deck', 'Transported', 'VRDeck','Destination']
-
-    label = 'Transported'
-
-    gbt = GradientBoostedTrees(train_df=train_df, valid_df=valid_df, test_df=test_df,label=label)
-    gbt.feature_selection(selected_features=select_features)
-    gbt.create_tuner(num_trials=50)
-    gbt.create_gbt_model()
-
-    # run experiment
-    gbt_model_history = gbt.run_experiments()
-    print(f"Train Model Accuracy: {gbt_model_history.history['accuracy']}")
-
-    # evaluate
-    gbt_model_evaluation = gbt.evaluate()
-    evaluation_accuracy = gbt_model_evaluation['accuracy']
-    print(f"Test accuracy with the TF-DF hyper-parameter tuner: {evaluation_accuracy:.4f}")
-
-    # predict
-    gbt_model_predictions, gbt_model_output = gbt.predict()
-
-    # training logs
-    gbt_model_training_logs = gbt.plot_training_logs()
-
-    # tuning logs
-    gbt_model_tuning_logs = gbt.plot_tuning_logs()
-
-    # variable importance
-    gbt_model_variable_importances = gbt.plot_variable_importances()
-
-    os.makedirs('submissions', exist_ok=True) 
-    gbt_model_output.to_csv("submissions/tf_gbt.csv",index=False)
+    
 
 if __name__ == "__main__":
-    main()
-
+    GradientBoostedTrees
