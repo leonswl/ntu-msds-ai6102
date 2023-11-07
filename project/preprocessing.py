@@ -38,15 +38,21 @@ def preprocessing(df):
     num_feats = ['VIP', 'CryoSleep', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
     # cat_feats = ['HomePlanet','Cabin','Destination','RoomService','Age']
 
-    cat_feats = ['HomePlanet','Destination', 'Side', 'Deck']
+    # cat_feats = ['HomePlanet','Destination', 'Side', 'Deck']
 
     # fillna
     df[num_feats] = df[num_feats].fillna(value=0) # with 0
-    df[cat_feats] = df[cat_feats].fillna(df.mode().iloc[0]) # with mode
+    # df[cat_feats] = df[cat_feats].fillna(df.mode().iloc[0]) # with mode
 
     # convert boolean columns to int
     col_lst = ["Transported","VIP","CryoSleep"]
     df = convert_bool_to_int(df, col_lst)
+
+    ## Feature Engineering
+
+    # derive IsAlone from PassengerId 
+    df[['PassengerId_1','PassengerId_2']] = df['PassengerId'].str.split('_',expand=True)
+    df['IsAlone'] = (df.groupby('PassengerId_1')['PassengerId_2'].transform('max').astype(int) < 2).astype(int)
 
     # split cabin into columns - Deck, Cabin_num and Side
     df["Cabin"].str.split("/", expand=True)
@@ -54,11 +60,9 @@ def preprocessing(df):
 
     # drop Cabin column
     try:
-        df = df.drop('Cabin', axis=1)
+        df = df.drop(['Cabin'], axis=1)
     except KeyError:
         print("Field does not exist")
-
-    
 
     return df
 
