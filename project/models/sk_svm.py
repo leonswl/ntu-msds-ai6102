@@ -114,7 +114,7 @@ class SVM:
         
         return best_params.get('C'), best_params.get('gamma'), best_params.get('kernel')
     
-    def create_svm_model(self, cv:bool=False, kernels:list=None, c:list=None, gammas:list=None):
+    def create_svm_model(self, cv:bool=False, kernels:list=None, Cs:list=None, gammas:list=None, kernel:str='linear',C:float=1,gamma:float=0.1):
         """
         Function to create SVM model. Cross validation is an optional parameter
 
@@ -124,9 +124,13 @@ class SVM:
         """
         logging.info("============ Creating SVM model ============")
         if not cv:
-            self._model = svm.SVC()
+            self._model = svm.SVC(
+                kernel=kernel,
+                C=C,
+                gamma=gamma
+            )
         else:
-            best_C, best_gamma, best_kernel = self.__GridSearch(kernels, c, gammas)
+            best_C, best_gamma, best_kernel = self.__GridSearch(kernels, Cs, gammas)
             self._model = svm.SVC(
                 kernel=best_kernel,
                 gamma=best_gamma,
@@ -167,6 +171,7 @@ class SVM:
             'PassengerId': self.submission_id,
             'Transported': self.predictions
             })
+        self.output[self.label] = self.output[self.label].astype(bool)
         
         logging.info("*********** Predictions completed successfully. Output file for submission has been generated and exported to desired path")
         
@@ -190,7 +195,7 @@ def sk_svm():
     logging.info("Feature selection will be executed over the following selected features: {%s}", select_features)
 
     # kernels = ['linear', 'rbf', 'poly', 'sigmoid']
-    kernels = ['linear','rbf']
+    kernels = ['linear',]
     # c = [1e-5, 1e-4, 1e-3, 1e-2, 0.1, 1, 10, 1e2, 1e3, 1e4, 1e5]
     c = [0.1, 1, 10]
     gammas = [0.1, 1, 10]
