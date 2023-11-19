@@ -51,8 +51,8 @@ def preprocessing(df):
     ## Feature Engineering
 
     # derive IsAlone from PassengerId 
-    df[['PassengerId_1','PassengerId_2']] = df['PassengerId'].str.split('_',expand=True)
-    df['IsAlone'] = (df.groupby('PassengerId_1')['PassengerId_2'].transform('max').astype(int) < 2).astype(int)
+    # df[['PassengerId_1','PassengerId_2']] = df['PassengerId'].str.split('_',expand=True)
+    # df['IsAlone'] = (df.groupby('PassengerId_1')['PassengerId_2'].transform('max').astype(int) < 2).astype(int)
 
     # split cabin into columns - Deck, Cabin_num and Side
     df["Cabin"].str.split("/", expand=True)
@@ -72,7 +72,6 @@ def split_dataset(df, test_ratio=0.20):
 
 # load input
 data_type = int(input("Select data set type to be preprocessed (0 - train, 1 - test): "))
-
 
 # if data type is train
 if data_type == 0:
