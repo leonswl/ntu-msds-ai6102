@@ -1,7 +1,8 @@
 # preprocess data and split training set to train and validation
-
+import os
 import pandas as pd
 import numpy as np
+import datetime
 
 def convert_bool_to_int(df:pd.DataFrame, col_lst:list) -> pd.DataFrame:
     """
@@ -38,11 +39,12 @@ def preprocessing(df):
     num_feats = ['VIP', 'CryoSleep', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
     # cat_feats = ['HomePlanet','Cabin','Destination','RoomService','Age']
 
-    # cat_feats = ['HomePlanet','Destination', 'Side', 'Deck']
+    cat_feats = ['HomePlanet','Destination', 'Side', 'Deck']
 
     # fillna
     df[num_feats] = df[num_feats].fillna(value=0) # with 0
     # df[cat_feats] = df[cat_feats].fillna(df.mode().iloc[0]) # with mode
+    
 
     # convert boolean columns to int
     col_lst = ["Transported","VIP","CryoSleep"]
@@ -70,8 +72,19 @@ def split_dataset(df, test_ratio=0.20):
   test_indices = np.random.rand(len(df)) < test_ratio
   return df[~test_indices], df[test_indices]
 
+
+
 # load input
 data_type = int(input("Select data set type to be preprocessed (0 - train, 1 - test): "))
+
+# get current datetime and date
+current_time = datetime.datetime.now()
+current_time = '_'.join(str(current_time).split(' '))
+current_date = datetime.date.today()
+current_date = ''.join(str(current_date).split('-'))
+
+# make data output directory if not exist
+os.makedirs(f"data/{current_date}", exist_ok=True) 
 
 # if data type is train
 if data_type == 0:
@@ -85,8 +98,8 @@ if data_type == 0:
     train_ds_pd, valid_ds_pd = split_dataset(dataset_df)
 
     # export datasets to path
-    train_ds_pd.to_csv("data/train_ds_pd.csv",index=False)
-    valid_ds_pd.to_csv("data/valid_ds_pd.csv",index=False)
+    train_ds_pd.to_csv(f"data/{current_date}/train_ds_pd_{current_time}.csv",index=False)
+    valid_ds_pd.to_csv(f"data/{current_date}/valid_ds_pd_{current_time}.csv",index=False)
 
     print(
         f"{len(train_ds_pd)} examples in training, {len(valid_ds_pd)} examples in validation."
@@ -100,7 +113,7 @@ elif data_type == 1:
     dataset_df = preprocessing(dataset_df)
 
     # export datasets to path
-    dataset_df.to_csv("data/test_ds_pd.csv",index=False)
+    dataset_df.to_csv(f"data/{current_date}/test_ds_pd_{current_time}.csv",index=False)
 
     print(
         f"{len(dataset_df)} examples in testing."
